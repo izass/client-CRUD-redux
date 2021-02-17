@@ -1,23 +1,27 @@
-import logo from './logo.svg';
-import './App.css';
+import Reacr, { useState } from 'react'
+import { Button } from 'react-bootstrap';
+import Landing from './pages/Landing'
+import NewClient from './pages/NewClient'
 
 function App() {
+  const [currentPage, setCurrentPage] = useState(true)
+
+  function renderCurrentPage() {
+    if (currentPage) {
+      return <Landing />
+    } else {
+      return <NewClient />
+    }
+  }
+
+  function togglePage() {
+    setCurrentPage(!currentPage)
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <Button onClick={togglePage}>toggle page</Button>
+      {renderCurrentPage()}
     </div>
   );
 }
