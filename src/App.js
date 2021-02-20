@@ -1,28 +1,49 @@
-import Reacr, { useState } from 'react'
-import { Button } from 'react-bootstrap';
+import React, { useEffect } from 'react'
+
+import {
+  Switch,
+  Route,
+} from "react-router-dom"
+import { useDispatch } from 'react-redux'
+
 import Landing from './pages/Landing'
 import NewClient from './pages/NewClient'
 
+import { setClients } from './ducks/clientsSlice'
+
+
 function App() {
-  const [currentPage, setCurrentPage] = useState(true)
+  const dispatch = useDispatch()
 
-  function renderCurrentPage() {
-    if (currentPage) {
-      return <Landing />
-    } else {
-      return <NewClient />
+  useEffect(() => {
+    generateSeed(1)
+  }, [dispatch])
+
+  function generateSeed(size) {
+    let seed = []
+    for(let i=0; i<size; i++) {
+      seed.push(
+        {
+          "id": i+1,
+          "value": "+55 84 91234-4321",
+          "monthyPrice": "0.03",
+          "setupPrice": "3.40",
+          "currency": "U$"
+        }
+      )
     }
-  }
-
-  function togglePage() {
-    setCurrentPage(!currentPage)
+    dispatch(setClients(seed))
   }
 
   return (
-    <div>
-      <Button onClick={togglePage}>toggle page</Button>
-      {renderCurrentPage()}
-    </div>
+    <Switch>
+      <Route exact path="/" component={Landing} />
+      <Route exact path="/newclient" component={NewClient} />
+      <Route exact path="/client/:id" component={NewClient} />
+      <Route path="*">
+        <h1>404</h1>
+      </Route>
+    </Switch>
   );
 }
 
