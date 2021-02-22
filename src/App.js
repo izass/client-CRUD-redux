@@ -10,6 +10,7 @@ import Landing from './pages/Landing'
 import NewClient from './pages/NewClient'
 
 import { setClients } from './ducks/clientsSlice'
+import NotFound from './pages/NotFound'
 
 
 function App() {
@@ -40,9 +41,7 @@ function App() {
       <Route exact path="/" component={Landing} />
       <Route exact path="/newclient" component={NewClient} />
       <Route exact path="/client/:id" component={NewClient} />
-      <Route path="*">
-        <h1>404</h1>
-      </Route>
+      <Route path="*" component={NotFound}/>
     </Switch>
   );
 }
