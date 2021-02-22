@@ -50,9 +50,21 @@ function NewClient(props) {
     },
     validationSchema,
     onSubmit: values => {
-
-
       setTimeout(() => {
+        if (currentClient) {
+          const filter = clients.filter(client => client.id != currentClient.id)
+          const editedClient = {
+            id: currentClient.id,
+            ...values
+          }
+
+
+          dispatch(setClients([editedClient, ...filter]))
+          setSubmitting(false)
+          props.history.push("/")
+          return
+        }
+
         const newClient = {
           id: count+1,
           ...values
@@ -68,8 +80,6 @@ function NewClient(props) {
   if (loadingPage) {
     return <LoadingPage />
   }
-
-  console.log(currentClient)
 
   return (
     <Container className="d-flex flex-column">
@@ -131,7 +141,7 @@ function NewClient(props) {
         </Form.Group>
 
         <Button type="submit" className="float-right" disabled={isSubmitting}>
-          add
+          Save
           {isSubmitting &&
             <Spinner animation="grow" size="sm"/>
           }
