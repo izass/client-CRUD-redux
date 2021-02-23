@@ -2,51 +2,73 @@ import React, { useEffect, useState } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, withRouter } from 'react-router-dom'
-import { Button, Container, Table, Pagination, Modal, Spinner } from 'react-bootstrap'
+import chunk from 'lodash.chunk'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faPen,
+  faTrash,
+  faExclamationTriangle,
+  faPlusCircle
+} from '@fortawesome/free-solid-svg-icons'
 
 import { setClients } from '../../ducks/clientsSlice'
 import LoadingPage from '../../components/LoadingPage'
+import {
+  Container,
+  Pagination,
+  TableCellActions,
+  Button,
+  Table,
+  Modal,
+  Spinner
+} from './styles'
 
 
 function Landing() {
   const dispatch = useDispatch()
   const clients = useSelector(state => state.clientsSlice.items)
 
-  const [pagesNumber, setPagesNumber] = useState(1)
+  const [pages, setPages] = useState([[]])
+  const [currentPage, setCurrentPage] = useState(0)
   const [show, setShow] = useState(false);
   const [selectedCientId, setSelectedClientId] = useState(null)
   const [loadingAction, setLoadingAction] = useState(false)
   const [loadingPage, setLoadingPage] = useState(true)
-
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
   useEffect(() => {
     setTimeout(() => {
+      const pagesPartition = chunk(clients, 10)
+
+      if (pagesPartition[currentPage] === undefined && pagesPartition.length > 0) {
+        setCurrentPage(currentPage-1)
+        setPages(chunk(clients, 10))
+      } else {
+        setPages(chunk(clients, 10))
+      }
       setLoadingPage(false)
     }, 2000)
-  }, [])
+  }, [clients])
 
-
-  useEffect(() => {
-    setPagesNumber(calculatePagesNumber())
-  }, [calculatePagesNumber])
-
-  function calculatePagesNumber() {
-    if (clients.length % 10 === 0) {
-      return clients.length/10
-    }
-    return parseInt((clients.length/10) + 1)
+  const nexPage = () => {
+    setCurrentPage(currentPage+1)
   }
 
-  function deleteClient() {
+  const previousPage = () => {
+    if (currentPage === 0) {
+      return
+    }
+
+    setCurrentPage(currentPage-1)
+  }
+
+  const deleteClient = () => {
     setLoadingAction(true)
     setTimeout(() => {
-      let list = clients.filter(client => client.id !== selectedCientId)
-
-      dispatch(setClients(list))
-
+      const filter = clients.filter(client => client.id !== selectedCientId)
+      dispatch(setClients(filter))
       setLoadingAction(false)
       handleClose()
     }, 2000)
@@ -54,9 +76,13 @@ function Landing() {
 
   function renderPagination() {
     let pagination = []
-    for (let i=0; i < pagesNumber; i++) {
+    for (let i=0; i < pages.length; i++) {
       pagination.push(
-        <Pagination.Item key={i}>{i+1}</Pagination.Item>
+        <Pagination.Item
+          key={i}
+          onClick={() => setCurrentPage(i)}
+          active={i === currentPage}
+        >{i+1}</Pagination.Item>
       )
     }
 
@@ -65,8 +91,8 @@ function Landing() {
         pagination[0],
         pagination[1],
         <Pagination.Ellipsis />,
-        pagination[pagesNumber-2],
-        pagination[pagesNumber-1]
+        pagination[pages.length-2],
+        pagination[pages.length-1]
       ]
 
       return longPagination
@@ -79,10 +105,41 @@ function Landing() {
     return <LoadingPage />
   }
 
+  function renderClientsList() {
+    if (pages[currentPage] === undefined) {
+      return
+    }
+
+    return pages[currentPage].map(client =>
+        <tr key={client.id}>
+          <td>{client.id}</td>
+          <td>{client.value}</td>
+          <td>{client.monthyPrice}</td>
+          <td>{client.setupPrice}</td>
+          <td>{client.currency}</td>
+          <TableCellActions>
+            <Button as={Link} to ={`/client/${client.id}`}>
+              <FontAwesomeIcon icon={faPen} />
+            </Button>
+            <Button variant="danger" onClick={() => {
+              setSelectedClientId(client.id)
+              handleShow()
+            }}>
+              <FontAwesomeIcon icon={faTrash} />
+            </Button>
+          </TableCellActions>
+        </tr>
+      )
+  }
+
   return (
-    <Container className="d-flex flex-column align-items-center">
-      <h1>hello</h1>
-      <Button as={Link} to="/newclient">add</Button>
+    <Container>
+      <h1>Table Control</h1>
+      <Button as={Link} to="/newclient" className="add-btn">
+        Add
+        <FontAwesomeIcon icon={faPlusCircle} />
+      </Button>
+
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -96,28 +153,16 @@ function Landing() {
         </thead>
 
         <tbody>
-          {clients.map((client, index) =>
-            <tr key={index}>
-              <td>{client.id}</td>
-              <td>{client.value}</td>
-              <td>{client.monthyPrice}</td>
-              <td>{client.setupPrice}</td>
-              <td>{client.currency}</td>
-              <td className="d-flex justify-content-center">
-                <Button as={Link} to ={`/client/${client.id}`}>#</Button>
-                <Button variant="danger" onClick={() => {
-                  setSelectedClientId(client.id)
-                  handleShow()
-                }}>x</Button>
-              </td>
-            </tr>
-          )}
+          {renderClientsList()}
         </tbody>
       </Table>
 
       <Modal show={show} onHide={loadingAction ? null : handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>WARNING</Modal.Title>
+          <Modal.Title>
+            <FontAwesomeIcon icon={faExclamationTriangle}/>{" "}
+            WARNING
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>Are you sure you want to delete the client from id {selectedCientId}?</Modal.Body>
         <Modal.Footer>
@@ -134,11 +179,11 @@ function Landing() {
       </Modal>
 
       <Pagination>
-        <Pagination.First />
-        <Pagination.Prev />
+        <Pagination.First onClick={() => setCurrentPage(0)} disabled={currentPage === 0} />
+        <Pagination.Prev onClick={previousPage} disabled={currentPage === 0}/>
         {renderPagination()}
-        <Pagination.Next />
-        <Pagination.Last />
+        <Pagination.Next onClick={nexPage} disabled={currentPage === pages.length -1 || pages.length === 0}/>
+        <Pagination.Last onClick={() => setCurrentPage(pages.length-1)} disabled={currentPage === pages.length -1 || pages.length === 0} />
       </Pagination>
 
     </Container>

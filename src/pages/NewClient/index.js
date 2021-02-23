@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react'
 
+import { withRouter } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { Button, Container, Form, Spinner } from 'react-bootstrap'
 import { useFormik } from 'formik'
 import MaskedInput from 'react-text-mask'
 
 import LoadingPage from '../../components/LoadingPage'
 import validationSchema from '../../validations/newClientValidation'
-import { setClients, setCount } from '../../ducks/clientsSlice'
-import { withRouter } from 'react-router-dom'
+import { setClients, setCounterId } from '../../ducks/clientsSlice'
+import { Button, Container, Form, Spinner, SaveButton } from './styles'
 
 
 function NewClient(props) {
   const dispatch = useDispatch()
   const clients = useSelector(state => state.clientsSlice.items)
-  const count = useSelector(state => state.clientsSlice.count)
+  const counterId = useSelector(state => state.clientsSlice.counterId)
 
   const [loadingPage, setLoadingPage] = useState(true)
   const [currentClient, setCurrentClient] = useState(null)
@@ -24,12 +24,19 @@ function NewClient(props) {
     setTimeout(() => {
       if (props.match.params.id) {
         const found = clients.find(client => client.id == props.match.params.id)
-        setCurrentClient(found)
+
+        //this is a gambiarra
+        if (found) {
+          setCurrentClient(found)
+        } else {
+          alert("client not found!")
+          props.history.push("/")
+        }
       }
 
       setLoadingPage(false)
     }, 2000)
-  }, [])
+  }, [clients, props.history, props.match.params.id])
 
   const {
     handleBlur,
@@ -58,7 +65,6 @@ function NewClient(props) {
             ...values
           }
 
-
           dispatch(setClients([editedClient, ...filter]))
           setSubmitting(false)
           props.history.push("/")
@@ -66,11 +72,12 @@ function NewClient(props) {
         }
 
         const newClient = {
-          id: count+1,
+          id: counterId+1,
           ...values
         }
+
         dispatch(setClients([...clients, newClient]))
-        dispatch(setCount(count + 1))
+        dispatch(setCounterId(counterId + 1))
         setSubmitting(false)
         props.history.push("/")
       }, 2000)
@@ -82,8 +89,8 @@ function NewClient(props) {
   }
 
   return (
-    <Container className="d-flex flex-column">
-      <h1 className="align-self-center">New Client</h1>
+    <Container>
+      <h1>New Client</h1>
       <Form onSubmit={handleSubmit}>
 
         <Form.Group>
@@ -140,12 +147,12 @@ function NewClient(props) {
           <Form.Control.Feedback type="invalid">{errors.currency}</Form.Control.Feedback>
         </Form.Group>
 
-        <Button type="submit" className="float-right" disabled={isSubmitting}>
+        <SaveButton type="submit" disabled={isSubmitting}>
           Save
           {isSubmitting &&
             <Spinner animation="grow" size="sm"/>
           }
-        </Button>
+        </SaveButton>
       </Form>
     </Container>
   )
