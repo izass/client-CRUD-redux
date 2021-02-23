@@ -4,19 +4,19 @@ export const clientsSlice = createSlice({
   name: 'clients',
   initialState: {
     items: [],
-    count: 1,
+    counterId: 0,
   },
   reducers: {
     setClients: (state, action) => {
       state.items = action.payload
     },
-    setCount: (state, action) => {
-      state.count = action.payload
+    setCounterId: (state, action) => {
+      state.counterId = action.payload
     }
   }
 })
 
-export const { setClients, setCount } = clientsSlice.actions
+export const { setClients, setCounterId } = clientsSlice.actions
 
 window.clientsSlice = clientsSlice
 
